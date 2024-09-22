@@ -63,8 +63,8 @@ func DisplayKusicaTaskStats(kusciaTaskStats map[string]KusicaTaskStats) {
 		fmt.Printf("  Total CPU Usage: %d ns\n", kusciaTaskStat.CPUUsage)
 		fmt.Printf("  Total Virtual Memory: %d bytes\n", kusciaTaskStat.VirtualMemory)
 		fmt.Printf("  Total Physical Memory: %d bytes\n", kusciaTaskStat.PhysicalMemory)
-		fmt.Printf("  Total Read Bytes: %d\n", kusciaTaskStat.ReadBytes)
-		fmt.Printf("  Total Write Bytes: %d\n", kusciaTaskStat.WriteBytes)
+		fmt.Printf("  Total Read Bytes: %d\n", kusciaTaskStat.NetIO.ReadBytes)
+		fmt.Printf("  Total Write Bytes: %d\n", kusciaTaskStat.NetIO.WriteBytes)
 	}
 }
 func main() {
