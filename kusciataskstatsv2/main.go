@@ -28,45 +28,45 @@ type KusicaTaskStats struct {
 	WriteBytes     uint64
 }
 
-func DisplayKusicaTaskStats(kusciaTaskStats map[string]KusicaTaskStats) {
-	for kusciaTaskID, kusciaTaskStat := range kusciaTaskStats {
-		netStats := kusciaTaskStat.NetIO
-		now := time.Now()
-		timeStamp := now.Format(time.RFC3339)
-		fmt.Println("Timestamp: ", timeStamp)
-		fmt.Printf("KusciaTask ID: %s\n", kusciaTaskID)
-		fmt.Printf("  Received Bytes: %d\n", netStats.RecvBytes)
-		fmt.Printf("  Transmitted Bytes: %d\n", netStats.XmitBytes)
-		fmt.Printf("  Received Bandwidth: %.2f\n", netStats.RecvBW)
-		fmt.Printf("  Transmitted Bandwidth: %.2f\n", netStats.XmitBW)
+// DisplayKusicaTaskStats displays statistics for a specific task
+func DisplayKusicaTaskStats(kusciaTaskID string, kusciaTaskStat KusicaTaskStats) {
+	netStats := kusciaTaskStat.NetIO
+	now := time.Now()
+	timeStamp := now.Format(time.RFC3339)
+	fmt.Println("Timestamp: ", timeStamp)
+	fmt.Printf("KusciaTask ID: %s\n", kusciaTaskID)
+	fmt.Printf("  Received Bytes: %d\n", netStats.RecvBytes)
+	fmt.Printf("  Transmitted Bytes: %d\n", netStats.XmitBytes)
+	fmt.Printf("  Received Bandwidth: %.2f bps\n", netStats.RecvBW)
+	fmt.Printf("  Transmitted Bandwidth: %.2f bps\n", netStats.XmitBW)
 
-		ctrStats := kusciaTaskStat.CtrStats
-		if ctrStats.CPUPercentage == "" {
-			ctrStats.CPUPercentage = "0"
-		}
-		if ctrStats.Memory == "" {
-			ctrStats.Memory = "0MB"
-		}
-		if ctrStats.Disk == "" {
-			ctrStats.Disk = "0B"
-		}
-		if ctrStats.Inodes == "" {
-			ctrStats.Inodes = "0"
-		}
-
-		fmt.Printf("  CPU%%: %s\n", ctrStats.CPUPercentage)
-		fmt.Printf("  Memory: %s\n", ctrStats.Memory)
-		fmt.Printf("  Disk: %s\n", ctrStats.Disk)
-		fmt.Printf("  Inodes: %s\n", ctrStats.Inodes)
-
-		// Display additional stats
-		fmt.Printf("  Total CPU Usage: %d ns\n", kusciaTaskStat.CPUUsage)
-		fmt.Printf("  Total Virtual Memory: %d bytes\n", kusciaTaskStat.VirtualMemory)
-		fmt.Printf("  Total Physical Memory: %d bytes\n", kusciaTaskStat.PhysicalMemory)
-		fmt.Printf("  Total Read Bytes: %d\n", kusciaTaskStat.NetIO.ReadBytes)
-		fmt.Printf("  Total Write Bytes: %d\n", kusciaTaskStat.NetIO.WriteBytes)
+	ctrStats := kusciaTaskStat.CtrStats
+	if ctrStats.CPUPercentage == "" {
+		ctrStats.CPUPercentage = "0"
 	}
+	if ctrStats.Memory == "" {
+		ctrStats.Memory = "0MB"
+	}
+	if ctrStats.Disk == "" {
+		ctrStats.Disk = "0B"
+	}
+	if ctrStats.Inodes == "" {
+		ctrStats.Inodes = "0"
+	}
+
+	fmt.Printf("  CPU%%: %s\n", ctrStats.CPUPercentage)
+	fmt.Printf("  Memory: %s\n", ctrStats.Memory)
+	fmt.Printf("  Disk: %s\n", ctrStats.Disk)
+	fmt.Printf("  Inodes: %s\n", ctrStats.Inodes)
+
+	// Display additional stats
+	fmt.Printf("  Total CPU Usage: %d ns\n", kusciaTaskStat.CPUUsage)
+	fmt.Printf("  Total Virtual Memory: %d bytes\n", kusciaTaskStat.VirtualMemory)
+	fmt.Printf("  Total Physical Memory: %d bytes\n", kusciaTaskStat.PhysicalMemory)
+	fmt.Printf("  Total Received Bytes: %d\n", netStats.RecvBytes)
+	fmt.Printf("  Total Transmitted Bytes: %d\n", netStats.XmitBytes)
 }
+
 func main() {
 	checkInterval := 1 * time.Second
 	ticker := time.NewTicker(checkInterval)
@@ -74,7 +74,6 @@ func main() {
 
 	var preRecvBytes, preXmitBytes uint64
 	timeWindow := 1.0
-	kusciaTaskStats := make(map[string]KusicaTaskStats)
 
 	for range ticker.C {
 		taskToPID, err := ktpid.GetKusciaTaskPID()
@@ -120,41 +119,37 @@ func main() {
 			// Get container stats
 			containerStats, err := ctrstats.GetContainerStats()
 			if err != nil {
-                                nlog.Warn("Fail to get the stats of containers")
-                                continue
-                        }
+				nlog.Warn("Fail to get the stats of containers")
+				continue
+			}
 			kusciaTaskStat.CtrStats = containerStats[containerID]
+
 			// Get CPU, Memory, and I/O stats
 			cpuUsage, err := ctrstats.GetTotalCPUUsageStats(containerID)
 			if err != nil {
-                                nlog.Warn("Fail to get the total CPU usage stats")
-                                continue
-                        }
+				nlog.Warn("Fail to get the total CPU usage stats")
+				continue
+			}
 			kusciaTaskStat.CPUUsage = cpuUsage
 
 			virtualMemory, physicalMemory, err := ctrstats.GetMaxMemoryUsageStats(containerPID, containerID)
 			if err != nil {
-                                nlog.Warn("Fail to get the total memory stats")
-                                continue
-                        }
+				nlog.Warn("Fail to get the total memory stats")
+				continue
+			}
 			kusciaTaskStat.VirtualMemory = virtualMemory
 			kusciaTaskStat.PhysicalMemory = physicalMemory
 
 			readBytes, writeBytes, err := ctrstats.GetTotalIOStats(containerPID)
 			if err != nil {
-                                nlog.Warn("Fail to get the total IO stats")
-                                continue
-                        }
+				nlog.Warn("Fail to get the total IO stats")
+				continue
+			}
 			kusciaTaskStat.ReadBytes = readBytes
 			kusciaTaskStat.WriteBytes = writeBytes
 
-			kusciaTaskStats[kusciaTaskID] = kusciaTaskStat
-			// Only display the stats if we have valid data
-                	if len(kusciaTaskStats) > 0 {
-                        	DisplayKusicaTaskStats(kusciaTaskStats)
-                	}
+			// Display the stats for the current task
+			DisplayKusicaTaskStats(kusciaTaskID, kusciaTaskStat)
 		}
-
 	}
 }
-
