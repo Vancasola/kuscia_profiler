@@ -3,10 +3,8 @@ module kusciataskstats
 go 1.22.5
 
 require (
-	github.com/containernetworking/plugins v1.5.1
 	github.com/json-iterator/go v1.1.12
 	github.com/secretflow/kuscia v0.0.0-20240725064852-e8666fe31e46
-	github.com/vishvananda/netlink v1.2.1-beta.2
 )
 
 require (
@@ -27,12 +25,11 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	github.com/vishvananda/netns v0.0.4 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
